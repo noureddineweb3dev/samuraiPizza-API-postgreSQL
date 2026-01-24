@@ -48,6 +48,26 @@ export async function getAllOrders(req, res, next) {
   }
 }
 
+export async function getMyOrders(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const result = await query('SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC', [userId]);
+
+    const orders = result.rows.map(order => ({
+      ...order,
+      cart: order.items,
+      items: undefined
+    }));
+
+    res.json({
+      status: 'success',
+      data: orders,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function createOrder(req, res, next) {
   try {
     const errors = validateOrder(req.body);
