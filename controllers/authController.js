@@ -26,8 +26,8 @@ export const signup = async (req, res, next) => {
         const hashedPassword = await bcrypt.hash(password, 12);
 
         const newUser = await query(
-            'INSERT INTO users (full_name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, full_name, email, created_at',
-            [fullName, email, hashedPassword]
+            'INSERT INTO users (full_name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, full_name, email, role, created_at',
+            [fullName, email, hashedPassword, 'customer'] // Default to customer
         );
 
         const token = signToken(newUser.rows[0].id);

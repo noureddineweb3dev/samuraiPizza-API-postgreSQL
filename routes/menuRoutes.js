@@ -2,7 +2,7 @@ import express from 'express';
 import { query } from '../db/index.js';
 import { validateMenuItem } from '../utils/validation.js';
 import { AppError } from '../middleware/errorMiddleware.js';
-import { protect } from '../middleware/authMiddleware.js';
+import { protect, restrictTo } from '../middleware/authMiddleware.js';
 import { upload } from '../utils/cloudinaryConfig.js';
 
 const router = express.Router();
@@ -35,7 +35,7 @@ router.get('/:id', async (req, res, next) => {
 });
 
 // POST create new menu item (with optional image upload)
-router.post('/', protect, upload.single('image'), async (req, res, next) => {
+router.post('/', protect, restrictTo('admin', 'manager'), upload.single('image'), async (req, res, next) => {
   try {
     const errors = validateMenuItem(req.body);
     if (errors.length > 0) {
@@ -63,7 +63,7 @@ router.post('/', protect, upload.single('image'), async (req, res, next) => {
 });
 
 // PATCH update menu item (with optional image upload)
-router.patch('/:id', protect, upload.single('image'), async (req, res, next) => {
+router.patch('/:id', protect, restrictTo('admin', 'manager'), upload.single('image'), async (req, res, next) => {
   try {
     const { id } = req.params;
     const { name, unitPrice, imageUrl, ingredients, soldOut } = req.body;
@@ -105,7 +105,7 @@ router.patch('/:id', protect, upload.single('image'), async (req, res, next) => 
 });
 
 // DELETE menu item
-router.delete('/:id', protect, async (req, res, next) => {
+router.delete('/:id', protect, restrictTo('admin', 'manager'), async (req, res, next) => {
   try {
     const { id } = req.params;
     const result = await query('DELETE FROM menu WHERE id = $1 RETURNING *', [id]);
