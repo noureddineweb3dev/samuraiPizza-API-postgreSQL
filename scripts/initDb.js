@@ -26,6 +26,8 @@ async function initDb() {
         const schema = fs.readFileSync(schemaPath, 'utf8');
 
         console.log('Running schema...');
+        // Drop existing tables to ensure schema update
+        await query('DROP TABLE IF EXISTS menu cascade');
         await query(schema);
         console.log('Schema created.');
 
@@ -62,8 +64,19 @@ async function initDb() {
                 }
 
                 await query(
-                    'INSERT INTO menu (name, unit_price, image_url, ingredients, sold_out) VALUES ($1, $2, $3, $4, $5)',
-                    [item.name, item.price, imageUrl, JSON.stringify(item.ingredients), !item.available]
+                    'INSERT INTO menu (name, description, unit_price, image_url, ingredients, category, spicy, vegetarian, bestseller, sold_out) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
+                    [
+                        item.name,
+                        item.description,
+                        item.price,
+                        imageUrl,
+                        JSON.stringify(item.ingredients),
+                        item.category,
+                        item.spicy || false,
+                        item.vegetarian || false,
+                        item.bestseller || false,
+                        !item.available
+                    ]
                 );
             }
             console.log('Menu seeded.');

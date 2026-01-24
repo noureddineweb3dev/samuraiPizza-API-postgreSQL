@@ -26,9 +26,14 @@ CREATE TABLE IF NOT EXISTS orders (
 CREATE TABLE IF NOT EXISTS menu (
   id SERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
+  description TEXT,
   unit_price REAL NOT NULL,
   image_url VARCHAR(255),
   ingredients JSONB,
+  category VARCHAR(50),
+  spicy BOOLEAN DEFAULT FALSE,
+  vegetarian BOOLEAN DEFAULT FALSE,
+  bestseller BOOLEAN DEFAULT FALSE,
   sold_out BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

@@ -42,15 +42,26 @@ router.post('/', protect, restrictTo('admin', 'manager'), upload.single('image')
       throw new AppError(errors.join(', '), 400);
     }
 
-    const { name, unitPrice, imageUrl, ingredients, soldOut } = req.body;
+    const { name, description, unitPrice, imageUrl, ingredients, category, spicy, vegetarian, bestseller, soldOut } = req.body;
 
     // Use uploaded image URL if file was uploaded, otherwise use provided imageUrl
     const finalImageUrl = req.file ? req.file.path : imageUrl;
 
     // Convert camelCase to snake_case for DB
     const result = await query(
-      'INSERT INTO menu (name, unit_price, image_url, ingredients, sold_out) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [name, unitPrice, finalImageUrl, JSON.stringify(ingredients), soldOut || false]
+      'INSERT INTO menu (name, description, unit_price, image_url, ingredients, category, spicy, vegetarian, bestseller, sold_out) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
+      [
+        name,
+        description,
+        unitPrice,
+        finalImageUrl,
+        JSON.stringify(ingredients),
+        category,
+        spicy || false,
+        vegetarian || false,
+        bestseller || false,
+        soldOut || false
+      ]
     );
 
     res.status(201).json({
@@ -66,7 +77,7 @@ router.post('/', protect, restrictTo('admin', 'manager'), upload.single('image')
 router.patch('/:id', protect, restrictTo('admin', 'manager'), upload.single('image'), async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, unitPrice, imageUrl, ingredients, soldOut } = req.body;
+    const { name, description, unitPrice, imageUrl, ingredients, category, spicy, vegetarian, bestseller, soldOut } = req.body;
 
     // Check if item exists
     const check = await query('SELECT * FROM menu WHERE id = $1', [id]);
@@ -83,9 +94,14 @@ router.patch('/:id', protect, restrictTo('admin', 'manager'), upload.single('ima
     let paramCount = 1;
 
     if (name) { updateQuery += `name = $${paramCount++}, `; values.push(name); }
+    if (description) { updateQuery += `description = $${paramCount++}, `; values.push(description); }
     if (unitPrice) { updateQuery += `unit_price = $${paramCount++}, `; values.push(unitPrice); }
     if (finalImageUrl) { updateQuery += `image_url = $${paramCount++}, `; values.push(finalImageUrl); }
     if (ingredients) { updateQuery += `ingredients = $${paramCount++}, `; values.push(JSON.stringify(ingredients)); }
+    if (category) { updateQuery += `category = $${paramCount++}, `; values.push(category); }
+    if (spicy !== undefined) { updateQuery += `spicy = $${paramCount++}, `; values.push(spicy); }
+    if (vegetarian !== undefined) { updateQuery += `vegetarian = $${paramCount++}, `; values.push(vegetarian); }
+    if (bestseller !== undefined) { updateQuery += `bestseller = $${paramCount++}, `; values.push(bestseller); }
     if (soldOut !== undefined) { updateQuery += `sold_out = $${paramCount++}, `; values.push(soldOut); }
 
     // Remove trailing comma and space
