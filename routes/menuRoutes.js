@@ -3,6 +3,7 @@ import { query } from '../db/index.js';
 import { validateMenuItem } from '../utils/validation.js';
 import { AppError } from '../middleware/errorMiddleware.js';
 import { protect } from '../middleware/authMiddleware.js';
+import { upload } from '../utils/cloudinaryConfig.js';
 
 const router = express.Router();
 
@@ -33,8 +34,8 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-// POST create new menu item
-router.post('/', protect, async (req, res, next) => {
+// POST create new menu item (with optional image upload)
+router.post('/', protect, upload.single('image'), async (req, res, next) => {
   try {
     const errors = validateMenuItem(req.body);
     if (errors.length > 0) {
@@ -43,10 +44,13 @@ router.post('/', protect, async (req, res, next) => {
 
     const { name, unitPrice, imageUrl, ingredients, soldOut } = req.body;
 
+    // Use uploaded image URL if file was uploaded, otherwise use provided imageUrl
+    const finalImageUrl = req.file ? req.file.path : imageUrl;
+
     // Convert camelCase to snake_case for DB
     const result = await query(
       'INSERT INTO menu (name, unit_price, image_url, ingredients, sold_out) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [name, unitPrice, imageUrl, JSON.stringify(ingredients), soldOut || false]
+      [name, unitPrice, finalImageUrl, JSON.stringify(ingredients), soldOut || false]
     );
 
     res.status(201).json({
@@ -58,8 +62,8 @@ router.post('/', protect, async (req, res, next) => {
   }
 });
 
-// PATCH update menu item
-router.patch('/:id', protect, async (req, res, next) => {
+// PATCH update menu item (with optional image upload)
+router.patch('/:id', protect, upload.single('image'), async (req, res, next) => {
   try {
     const { id } = req.params;
     const { name, unitPrice, imageUrl, ingredients, soldOut } = req.body;
@@ -70,6 +74,9 @@ router.patch('/:id', protect, async (req, res, next) => {
       throw new AppError(`Couldn't find menu item #${id}`, 404);
     }
 
+    // Use uploaded image URL if file was uploaded, otherwise use provided imageUrl
+    const finalImageUrl = req.file ? req.file.path : imageUrl;
+
     // Dynamic update query
     let updateQuery = 'UPDATE menu SET ';
     const values = [];
@@ -77,7 +84,7 @@ router.patch('/:id', protect, async (req, res, next) => {
 
     if (name) { updateQuery += `name = $${paramCount++}, `; values.push(name); }
     if (unitPrice) { updateQuery += `unit_price = $${paramCount++}, `; values.push(unitPrice); }
-    if (imageUrl) { updateQuery += `image_url = $${paramCount++}, `; values.push(imageUrl); }
+    if (finalImageUrl) { updateQuery += `image_url = $${paramCount++}, `; values.push(finalImageUrl); }
     if (ingredients) { updateQuery += `ingredients = $${paramCount++}, `; values.push(JSON.stringify(ingredients)); }
     if (soldOut !== undefined) { updateQuery += `sold_out = $${paramCount++}, `; values.push(soldOut); }
 
