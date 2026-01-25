@@ -75,17 +75,43 @@ export async function createOrder(req, res, next) {
       throw new AppError(errors.join(', '), 400);
     }
 
-    const { customer, phone, address, priority, cart, orderPrice, priorityPrice, totalPrice } = req.body;
+    const { customer, phone, address, priority, cart } = req.body;
+
+    // Verify cart items and calculate price server-side for security
+    const pizzaIds = cart.map(item => item.pizzaId);
+    if (pizzaIds.length === 0) throw new AppError('Cart is empty', 400);
+
+    const menuItemsResult = await query('SELECT id, unit_price, name FROM menu WHERE id = ANY($1)', [pizzaIds]);
+    const menuItems = menuItemsResult.rows;
+
+    let calculatedOrderPrice = 0;
+    const validatedCart = [];
+
+    for (const cartItem of cart) {
+      const menuItem = menuItems.find(p => p.id === cartItem.pizzaId);
+      if (!menuItem) {
+        throw new AppError(`Product with ID ${cartItem.pizzaId} not found`, 404);
+      }
+      calculatedOrderPrice += menuItem.unit_price * cartItem.quantity;
+
+      // Update cart item with trusted data (optional but good for history)
+      validatedCart.push({
+        ...cartItem,
+        unitPrice: menuItem.unit_price,
+        totalPrice: menuItem.unit_price * cartItem.quantity,
+        name: menuItem.name
+      });
+    }
+
+    const finalOrderPrice = calculatedOrderPrice;
+    const finalPriorityPrice = priority ? Math.round(finalOrderPrice * 0.2) : 0;
+    const finalTotalPrice = finalOrderPrice + finalPriorityPrice;
 
     const id = crypto.randomUUID();
     const userId = req.user ? req.user.id : null;
     const status = 'preparing';
-    const estimatedDelivery = new Date(Date.now() + 40 * 60000).toISOString();
-
-    const finalOrderPrice = Number(orderPrice);
-    const finalPriorityPrice = Number(priorityPrice || 0);
-    const finalTotalPrice = Number(totalPrice);
-    const itemsJson = JSON.stringify(cart);
+    const estimatedDelivery = new Date(Date.now() + (priority ? 20 : 40) * 60000).toISOString();
+    const itemsJson = JSON.stringify(validatedCart);
 
     await query(
       `INSERT INTO orders (id, customer_id, customer, phone, address, priority, order_price, priority_price, total_price, status, items, estimated_delivery)
@@ -96,7 +122,7 @@ export async function createOrder(req, res, next) {
     const newOrder = {
       id, userId, customer, phone, address, priority,
       orderPrice: finalOrderPrice, priorityPrice: finalPriorityPrice, totalPrice: finalTotalPrice,
-      status, cart, estimatedDelivery
+      status, cart: validatedCart, estimatedDelivery
     }
 
     res.status(201).json({
