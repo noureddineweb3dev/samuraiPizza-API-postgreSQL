@@ -84,17 +84,17 @@ async function initDb() {
         }
 
         // Seed admin user if not exists
-        const adminCheck = await query("SELECT * FROM users WHERE email = $1", ['noureddine@samuraipizza.com']);
+        const adminCheck = await query("SELECT * FROM admins WHERE username = $1", ['noureddine']);
         if (adminCheck.rows.length === 0) {
             console.log('Seeding admin user...');
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash('admin123', salt);
 
             await query(
-                'INSERT INTO users (full_name, email, password_hash, role) VALUES ($1, $2, $3, $4)',
-                ['Noureddine', 'noureddine@samuraipizza.com', hashedPassword, 'admin']
+                'INSERT INTO admins (full_name, username, password_hash, role) VALUES ($1, $2, $3, $4)',
+                ['Noureddine', 'noureddine', hashedPassword, 'admin']
             );
-            console.log('Admin user seeded (noureddine@samuraipizza.com / admin123).');
+            console.log('Admin user seeded (noureddine / admin123).');
         }
 
         console.log('Database initialized successfully.');

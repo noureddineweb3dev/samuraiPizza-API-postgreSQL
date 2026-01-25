@@ -1,15 +1,27 @@
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS customers (
   id SERIAL PRIMARY KEY,
-  full_name VARCHAR(255) NOT NULL,
-  email VARCHAR(255) UNIQUE NOT NULL,
+  full_name VARCHAR(255),
+  email VARCHAR(255) UNIQUE,
+  phone VARCHAR(20) UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
-  role VARCHAR(20) DEFAULT 'customer',
+  address TEXT,
+  preferences JSONB,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT email_or_phone_check CHECK (email IS NOT NULL OR phone IS NOT NULL)
+);
+
+CREATE TABLE IF NOT EXISTS admins (
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(50) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  role VARCHAR(20) DEFAULT 'staff',
+  full_name VARCHAR(100),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS orders (
   id VARCHAR(255) PRIMARY KEY,
-  user_id INTEGER REFERENCES users(id),
+  customer_id INTEGER REFERENCES customers(id), -- Changed from user_id
   customer VARCHAR(255),
   phone VARCHAR(255),
   address VARCHAR(255),
