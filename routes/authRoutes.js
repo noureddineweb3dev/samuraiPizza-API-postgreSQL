@@ -2,7 +2,7 @@ import express from 'express';
 import {
     signupCustomer, loginCustomer,
     createAdmin, loginAdmin,
-    getAllAdmins, updateAdmin
+    getAllAdmins, updateAdmin, deleteAdmin
 } from '../controllers/authController.js';
 import { protect, restrictTo } from '../middleware/authMiddleware.js';
 
@@ -17,5 +17,6 @@ router.post('/admin/login', loginAdmin);
 router.post('/create-admin', protect, restrictTo('admin'), createAdmin);
 router.get('/admins', protect, restrictTo('admin'), getAllAdmins);
 router.patch('/admins/:id', protect, restrictTo('admin'), updateAdmin);
+router.delete('/admins/:id', protect, restrictTo('admin'), deleteAdmin);
 
 export default router;

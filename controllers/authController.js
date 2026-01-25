@@ -137,6 +137,10 @@ export const loginAdmin = async (req, res, next) => {
             throw new AppError('Incorrect username or password', 401);
         }
 
+        if (admin.role === 'blocked') {
+            throw new AppError('Your account has been blocked. Contact administrator.', 403);
+        }
+
         const token = signToken(admin.id, 'admin');
         admin.password_hash = undefined;
 
@@ -201,6 +205,24 @@ export const updateAdmin = async (req, res, next) => {
             data: {
                 user: result.rows[0],
             },
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const deleteAdmin = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const result = await query('DELETE FROM admins WHERE id = $1 RETURNING *', [id]);
+
+        if (result.rows.length === 0) {
+            throw new AppError('No admin found with that ID', 404);
+        }
+
+        res.status(204).json({
+            status: 'success',
+            data: null,
         });
     } catch (err) {
         next(err);
