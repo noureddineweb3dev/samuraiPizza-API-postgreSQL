@@ -152,5 +152,60 @@ export const loginAdmin = async (req, res, next) => {
     }
 };
 
+export const getAllAdmins = async (req, res, next) => {
+    try {
+        const result = await query('SELECT id, full_name, username, role, created_at FROM admins ORDER BY created_at DESC');
+        res.status(200).json({
+            status: 'success',
+            results: result.rows.length,
+            data: result.rows,
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const updateAdmin = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { fullName, username, password, role } = req.body;
+
+        // 1. Build update query dynamically
+        let updateQuery = 'UPDATE admins SET ';
+        const values = [];
+        let paramCount = 1;
+
+        if (fullName) { updateQuery += `full_name = $${paramCount++}, `; values.push(fullName); }
+        if (username) { updateQuery += `username = $${paramCount++}, `; values.push(username); }
+        if (role) { updateQuery += `role = $${paramCount++}, `; values.push(role); }
+        if (password) {
+            const hashedPassword = await bcrypt.hash(password, 12);
+            updateQuery += `password_hash = $${paramCount++}, `;
+            values.push(hashedPassword);
+        }
+
+        // Remove trailing comma
+        updateQuery = updateQuery.slice(0, -2);
+        updateQuery += ` WHERE id = $${paramCount} RETURNING id, full_name, username, role, created_at`;
+        values.push(id);
+
+        // 2. Execute query
+        const result = await query(updateQuery, values);
+
+        if (result.rows.length === 0) {
+            throw new AppError('No admin found with that ID', 404);
+        }
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                user: result.rows[0],
+            },
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 export const login = loginCustomer; // Backward compatibility alias if needed, but routes should update
 export const signup = signupCustomer; // Backward compatibility alias
