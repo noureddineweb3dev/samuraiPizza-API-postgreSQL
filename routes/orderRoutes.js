@@ -10,6 +10,6 @@ router.get('/', protect, restrictTo('admin', 'manager', 'staff'), getAllOrders);
 router.get('/own', protect, getMyOrders);
 router.get('/:id', getOrder); // Public for guest access via ID
 router.patch('/:id', protect, restrictTo('admin', 'manager', 'staff'), updateOrder);
-router.delete('/:id', protect, restrictTo('admin', 'manager'), deleteOrder);
+router.delete('/:id', protect, restrictTo('admin'), deleteOrder);
 
 export default router;
