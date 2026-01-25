@@ -51,7 +51,7 @@ export async function getAllOrders(req, res, next) {
 export async function getMyOrders(req, res, next) {
   try {
     const userId = req.user.id;
-    const result = await query('SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC', [userId]);
+    const result = await query('SELECT * FROM orders WHERE customer_id = $1 ORDER BY created_at DESC', [userId]);
 
     const orders = result.rows.map(order => ({
       ...order,
@@ -88,7 +88,7 @@ export async function createOrder(req, res, next) {
     const itemsJson = JSON.stringify(cart);
 
     await query(
-      `INSERT INTO orders (id, user_id, customer, phone, address, priority, order_price, priority_price, total_price, status, items, estimated_delivery)
+      `INSERT INTO orders (id, customer_id, customer, phone, address, priority, order_price, priority_price, total_price, status, items, estimated_delivery)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
       [id, userId, customer, phone, address, priority, finalOrderPrice, finalPriorityPrice, finalTotalPrice, status, itemsJson, estimatedDelivery]
     );
