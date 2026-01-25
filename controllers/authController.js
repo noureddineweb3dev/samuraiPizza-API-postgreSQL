@@ -13,7 +13,7 @@ const signToken = (id, type) => {
 
 export const signupCustomer = async (req, res, next) => {
     try {
-        const { fullName, email, phone, password } = req.body;
+        const { fullName, email, phone, password, address } = req.body;
 
         if (!fullName || !password || (!email && !phone)) {
             throw new AppError('Please provide full name, password, and either email or phone', 400);
@@ -32,8 +32,8 @@ export const signupCustomer = async (req, res, next) => {
         const hashedPassword = await bcrypt.hash(password, 12);
 
         const newCustomer = await query(
-            'INSERT INTO customers (full_name, email, phone, password_hash) VALUES ($1, $2, $3, $4) RETURNING id, full_name, email, phone, created_at',
-            [fullName, email || null, phone || null, hashedPassword]
+            'INSERT INTO customers (full_name, email, phone, password_hash, address) VALUES ($1, $2, $3, $4, $5) RETURNING id, full_name, email, phone, address, created_at',
+            [fullName, email || null, phone || null, hashedPassword, address || null]
         );
 
         const token = signToken(newCustomer.rows[0].id, 'customer');
