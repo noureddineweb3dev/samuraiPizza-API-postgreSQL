@@ -229,5 +229,4 @@ export const deleteAdmin = async (req, res, next) => {
     }
 };
 
-export const login = loginCustomer; // Backward compatibility alias if needed, but routes should update
-export const signup = signupCustomer; // Backward compatibility alias
+
