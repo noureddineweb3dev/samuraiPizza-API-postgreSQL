@@ -21,7 +21,10 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'https://fast-pizza-react.vercel.app', 'https://samurai-pizza-dashboard.vercel.app'], // Add your production domains here
+  credentials: true
+}));
 app.use(express.json());
 app.use(morgan('dev'));
 
