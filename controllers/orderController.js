@@ -14,10 +14,17 @@ export async function getOrder(req, res, next) {
     }
 
     // Parse items JSON back to object
+    // Parse items JSON back to object & Map DB columns to Frontend props
     if (order.items) {
-      order.cart = order.items; // Frontend expects 'cart'
+      order.cart = order.items;
       delete order.items;
     }
+    // Map snake_case to camelCase
+    order.orderPrice = order.order_price;
+    order.priorityPrice = order.priority_price;
+    order.totalPrice = order.total_price;
+    order.date = order.created_at; // Frontend expects 'date'
+    order.estimatedDelivery = order.estimated_delivery;
 
     res.json({
       status: 'success',
@@ -36,7 +43,13 @@ export async function getAllOrders(req, res, next) {
     const orders = result.rows.map(order => ({
       ...order,
       cart: order.items,
-      items: undefined
+      items: undefined,
+      // Map properties
+      orderPrice: order.order_price,
+      priorityPrice: order.priority_price,
+      totalPrice: order.total_price,
+      date: order.created_at,
+      estimatedDelivery: order.estimated_delivery
     }));
 
     res.json({
@@ -56,7 +69,13 @@ export async function getMyOrders(req, res, next) {
     const orders = result.rows.map(order => ({
       ...order,
       cart: order.items,
-      items: undefined
+      items: undefined,
+      // Map properties
+      orderPrice: order.order_price,
+      priorityPrice: order.priority_price,
+      totalPrice: order.total_price,
+      date: order.created_at,
+      estimatedDelivery: order.estimated_delivery
     }));
 
     res.json({
@@ -109,7 +128,7 @@ export async function createOrder(req, res, next) {
 
     const id = crypto.randomUUID();
     const userId = req.user ? req.user.id : null;
-    const status = 'preparing';
+    const status = 'placed'; // Initial status
     const estimatedDelivery = new Date(Date.now() + (priority ? 20 : 40) * 60000).toISOString();
     const itemsJson = JSON.stringify(validatedCart);
 
@@ -124,6 +143,16 @@ export async function createOrder(req, res, next) {
       orderPrice: finalOrderPrice, priorityPrice: finalPriorityPrice, totalPrice: finalTotalPrice,
       status, cart: validatedCart, estimatedDelivery
     }
+
+    // Automatically change status to 'pending' after 1 minute (simulation)
+    setTimeout(async () => {
+      try {
+        await query('UPDATE orders SET status = $1 WHERE id = $2 AND status = $3', ['pending', id, 'placed']);
+        console.log(`Order ${id} auto-updated to pending`);
+      } catch (err) {
+        console.error(`Failed to auto-update order ${id}`, err);
+      }
+    }, 60000);
 
     res.status(201).json({
       status: 'success',
