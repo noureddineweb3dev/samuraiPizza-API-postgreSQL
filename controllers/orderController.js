@@ -3,6 +3,16 @@ import { query } from '../db/index.js';
 import { validateOrder } from '../utils/validation.js';
 import { AppError } from '../middleware/errorMiddleware.js';
 
+// Helper to generate short readable IDs: SAP + 7 alphanumeric chars
+const generateOrderId = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = 'SAP';
+  for (let i = 0; i < 7; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+
 export async function getOrder(req, res, next) {
   try {
     const { id } = req.params;
@@ -126,7 +136,9 @@ export async function createOrder(req, res, next) {
     const finalPriorityPrice = priority ? Math.round(finalOrderPrice * 0.2) : 0;
     const finalTotalPrice = finalOrderPrice + finalPriorityPrice;
 
-    const id = crypto.randomUUID();
+
+
+    const id = generateOrderId();
     const userId = req.user ? req.user.id : null;
     const status = 'placed'; // Initial status
     const estimatedDelivery = new Date(Date.now() + (priority ? 20 : 40) * 60000).toISOString();
