@@ -59,7 +59,8 @@ export async function getAllOrders(req, res, next) {
       priorityPrice: order.priority_price,
       totalPrice: order.total_price,
       date: order.created_at,
-      estimatedDelivery: order.estimated_delivery
+      estimatedDelivery: order.estimated_delivery,
+      updatedBy: order.updated_by
     }));
 
     res.json({
@@ -179,11 +180,12 @@ export async function updateOrder(req, res, next) {
   try {
     const { id } = req.params;
     const { status } = req.body;
+    const updatedBy = req.user ? (req.user.fullName || req.user.full_name) : 'System';
 
     // Only allowing status update for now as per previous logic
     const result = await query(
-      'UPDATE orders SET status = $1 WHERE id = $2 RETURNING *',
-      [status, id]
+      'UPDATE orders SET status = $1, updated_by = $2 WHERE id = $3 RETURNING *',
+      [status, updatedBy, id]
     );
 
     if (result.rows.length === 0) {
@@ -193,6 +195,14 @@ export async function updateOrder(req, res, next) {
     const order = result.rows[0];
     order.cart = order.items;
     delete order.items;
+
+    // Map snake_case to camelCase
+    order.orderPrice = order.order_price;
+    order.priorityPrice = order.priority_price;
+    order.totalPrice = order.total_price;
+    order.date = order.created_at;
+    order.estimatedDelivery = order.estimated_delivery;
+    order.updatedBy = order.updated_by; // Map updated_by
 
     res.json({
       status: 'success',
