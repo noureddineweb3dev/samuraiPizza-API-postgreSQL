@@ -33,11 +33,13 @@ import authRoutes from './routes/authRoutes.js';
 import menuRoutes from './routes/menuRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import favoritesRoutes from './routes/favoritesRoutes.js';
+import ratingsRoutes from './routes/ratingsRoutes.js';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/favorites', favoritesRoutes);
+app.use('/api/ratings', ratingsRoutes);
 
 app.get('/', (req, res) => {
   res.send('🍕 Pizza Samurai API is running');
