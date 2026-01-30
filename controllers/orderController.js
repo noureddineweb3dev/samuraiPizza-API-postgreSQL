@@ -141,7 +141,7 @@ export async function createOrder(req, res, next) {
 
     const id = generateOrderId();
     const userId = req.user ? req.user.id : null;
-    const status = 'placed'; // Initial status
+    const status = 'received'; // Initial status (new order received)
     const estimatedDelivery = new Date(Date.now() + (priority ? 20 : 40) * 60000).toISOString();
     const itemsJson = JSON.stringify(validatedCart);
 
@@ -157,13 +157,13 @@ export async function createOrder(req, res, next) {
       status, cart: validatedCart, estimatedDelivery
     }
 
-    // Automatically change status to 'pending' after 1 minute (simulation)
+    // Automatically change status to 'confirmed' after 1 minute (simulation)
     setTimeout(async () => {
       try {
-        await query('UPDATE orders SET status = $1 WHERE id = $2 AND status = $3', ['pending', id, 'placed']);
-        console.log(`Order ${id} auto-updated to pending`);
+        await query('UPDATE orders SET status = $1 WHERE id = $2 AND status = $3', ['confirmed', id, 'received']);
+        console.log(`Order ${id} auto-confirmed`);
       } catch (err) {
-        console.error(`Failed to auto-update order ${id}`, err);
+        console.error(`Failed to auto-confirm order ${id}`, err);
       }
     }, 60000);
 
